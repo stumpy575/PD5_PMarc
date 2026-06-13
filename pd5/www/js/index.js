@@ -1,29 +1,51 @@
-/*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
- */
+document.addEventListener('DOMContentLoaded', function() {
+    M.AutoInit();
+    loadArticles();
+});
 
-// Wait for the deviceready event before using any of Cordova's device APIs.
-// See https://cordova.apache.org/docs/en/latest/cordova/events/events.html#deviceready
-document.addEventListener('deviceready', onDeviceReady, false);
+function loadArticles() {
+    const container = document.getElementById('news-container');
+    container.innerHTML = '<div class="center-align" style="padding:40px;"><p>Loading news...</p></div>';
 
-function onDeviceReady() {
-    // Cordova is now initialized. Have fun!
+    fetch("https://api.spaceflightnewsapi.net/v4/articles/?limit=2")
+        .then(response => response.json())
+        .then(data => displayArticles(data.results))
+        .catch(error => {
+            container.innerHTML = '<div class="center-align" style="padding:40px;"><p>Failed to load news. Please try again later.</p></div>';
+            console.error('API error:', error);
+        });
+}
 
-    console.log('Running cordova-' + cordova.platformId + '@' + cordova.version);
-    document.getElementById('deviceready').classList.add('ready');
+function displayArticles(articles) {
+    const container = document.getElementById('news-container');
+    container.innerHTML = '';
+
+    articles.forEach(article => {
+        const date = new Date(article.published_at).toLocaleDateString('en-GB', {
+            day: 'numeric', month: 'short', year: 'numeric'
+        });
+
+        const col = document.createElement('div');
+        col.className = 'col s12 m6';
+        col.innerHTML =
+        `
+            <div class="news-card card">
+                <div class="card-image">
+                    <img src="${article.image_url}" alt="${article.title}">
+                </div>
+                <div class="card-content">
+                    <span class="news-tag">Space</span>
+                    <span class="card-title">${article.title}</span>
+                    <p>${article.summary}</p>
+                    <div class="news-meta">
+                        <i class="material-icons">schedule</i> ${date}
+                    </div>
+                </div>
+                <div class="card-action">
+                    <a href="${article.url}" target="_blank">Read more</a>
+                </div>
+            </div>`
+        ;
+        container.appendChild(col);
+    });
 }
